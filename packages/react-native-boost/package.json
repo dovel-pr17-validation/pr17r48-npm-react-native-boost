@@ -84,7 +84,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "@babel/core": "^7.29.7",
+    "@babel/core": "^7.29.13",
     "@babel/helper-module-imports": "^7.29.7",
     "@babel/helper-plugin-utils": "^7.29.7",
     "minimatch": "^11.0.3"
