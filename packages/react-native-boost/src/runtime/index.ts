@@ -1,0 +1,650 @@
+import {
+  TextProps,
+  TextStyle,
+  StyleSheet,
+  Platform,
+  Image as RNImage,
+  processColor as rnProcessColor,
+} from 'react-native';
+import type { ActivityIndicatorProps, ColorValue, ProcessedColorValue } from 'react-native';
+import { GenericStyleProp } from './types';
+import { userSelectToSelectableMap, verticalAlignToTextAlignVerticalMap } from './utils/constants';
+
+const imageBaseStyle = { overflow: 'hidden' } as const;
+export const textDefaultOverflowStyle = { overflow: 'hidden' } as const;
+const emptyImageSource = { uri: undefined, width: undefined, height: undefined };
+export const activityIndicatorStyles = {
+  container: { alignItems: 'center', justifyContent: 'center' },
+  small: { width: 20, height: 20 },
+  large: { width: 36, height: 36 },
+} as const;
+let activityIndicatorSmallProps: { style: (typeof activityIndicatorStyles)['small']; size: 'small' } | undefined;
+let activityIndicatorLargeProps: { style: (typeof activityIndicatorStyles)['large']; size: 'large' } | undefined;
+
+// Resolve RN's `processColor` once. The `typeof` guard degrades to a passthrough on
+// a non-RN host that lacks it (see {@link processSelectionColor}).
+const processColor: ((color?: ColorValue | number) => ProcessedColorValue | null | undefined) | undefined =
+  typeof rnProcessColor === 'function' ? rnProcessColor : undefined;
+const resolveImageAssetSource =
+  typeof RNImage.resolveAssetSource === 'function'
+    ? RNImage.resolveAssetSource.bind(RNImage)
+    : <T>(source: T): T => source;
+
+const objectFitToResizeMode: Record<string, string> = {
+  'contain': 'contain',
+  'cover': 'cover',
+  'fill': 'stretch',
+  'none': 'none',
+  'scale-down': 'contain',
+};
+
+let cachedReactNativeMinor: number | null | undefined;
+
+/**
+ * The installed React Native minor version (as in `0.<minor>`), or `null` when it cannot be
+ * determined — a non-RN host, or a future major where the minor no longer identifies the release.
+ * Callers treat `null` as "the current wrapper behavior".
+ *
+ * @remarks
+ * This fallback is used only when the Babel plugin cannot resolve the build target. The synchronous
+ * native-constants read happens lazily on first use and is memoized.
+ *
+ * Boost intentionally mirrors release defaults by version. Do not import RN's private feature flags:
+ * their paths are unstable, and apps that override private flags must patch Boost or skip optimization.
+ */
+function getReactNativeMinor(): number | null {
+  if (cachedReactNativeMinor === undefined) {
+    let version: { major?: number; minor?: number } | undefined;
+    try {
+      version = (Platform as { constants?: { reactNativeVersion?: { major?: number; minor?: number } } }).constants
+        ?.reactNativeVersion;
+    } catch {
+      version = undefined;
+    }
+    cachedReactNativeMinor =
+      version != null && version.major === 0 && typeof version.minor === 'number' ? version.minor : null;
+  }
+  return cachedReactNativeMinor;
+}
+
+let cachedDefaultTextStyle: TextStyle | false | undefined;
+
+/**
+ * The default style `Text` prepends to every element's `style` — `{ overflow: 'hidden' }` on RN ≥
+ * 0.85, and `undefined` otherwise. The plugin uses this fallback when the build target is unknown.
+ */
+export function getDefaultTextStyle(): TextStyle | undefined {
+  const minor = getReactNativeMinor();
+  cachedDefaultTextStyle ??= minor === null || minor >= 85 ? textDefaultOverflowStyle : false;
+  return cachedDefaultTextStyle || undefined;
+}
+
+/**
+ * Whether RN's Android `Image` wrapper lifts a plain OBJECT source's inline `headers` onto the
+ * top-level `headers` prop — the only prop Android's `ReactImageView` reads for HTTP headers.
+ *
+ * True on RN <= 0.84 and >= 0.87, false on RN 0.85/0.86: deleting the legacy wrapper path
+ * (react-native#55291) dropped the lift, and react-native#56905 restored it in 0.87.0-rc.0 with no
+ * 0.86 backport. Boost tracks the installed version instead of papering over the gap, so an
+ * optimized build stays indistinguishable from the wrapper on every supported version.
+ *
+ * ARRAY sources are unaffected (every version lifts `source[0].headers`), and iOS has no top-level
+ * `headers` prop at all — it reads them per source entry natively.
+ */
+function liftsObjectSourceHeaders(): boolean {
+  const minor = getReactNativeMinor();
+  return minor === null || minor <= 84 || minor >= 87;
+}
+
+/**
+ * Whether RN's Android `Image` wrapper propagates a single-entry ARRAY source's intrinsic
+ * width/height into the layout style. RN 0.85 introduced this behavior as an enabled-by-default
+ * feature flag, and RN 0.86 made it unconditional. RN <= 0.84 does not propagate the dimensions.
+ */
+function propagatesArraySourceDimensions(): boolean {
+  const minor = getReactNativeMinor();
+  return minor === null || minor >= 85;
+}
+
+/**
+ * Gates a plain OBJECT source's inline `headers` for the top-level Android `headers` prop when the
+ * build target is unknown. See {@link liftsObjectSourceHeaders}.
+ */
+export function processImageObjectSourceHeaders<T>(headers: T): T | undefined {
+  const minor = getReactNativeMinor();
+  if (headers === null && (minor === null || minor >= 85)) return undefined;
+  return liftsObjectSourceHeaders() ? headers : undefined;
+}
+
+/**
+ * Gates a single-entry ARRAY source's intrinsic dimensions when the build target is unknown. An
+ * `undefined` entry is ignored by style flattening, exactly like the wrapper's `false`.
+ * See {@link propagatesArraySourceDimensions}.
+ */
+export function processImageArraySourceDimensions<T>(dimensions: T): T | undefined {
+  return propagatesArraySourceDimensions() ? dimensions : undefined;
+}
+
+/**
+ * Normalizes `Text` style values for `NativeText`.
+ *
+ * @param style - Style prop passed to a text-like component.
+ * @param includesDefaultStyle - Build-time release default. Omit it to detect the runtime version.
+ * @returns Native text props with the authored style and wrapper overrides preserved.
+ * @remarks
+ * - Inspects style arrays via `StyleSheet.flatten`, without replacing the authored style
+ * - Converts numeric `fontWeight` values to string values
+ * - Maps `userSelect` and `verticalAlign` to native-compatible props
+ * - Applies the build-time default-style setting, or uses {@link getDefaultTextStyle} as a fallback
+ */
+export function processTextStyle(
+  style: GenericStyleProp<TextStyle>,
+  includesDefaultStyle?: boolean
+): Partial<TextProps> {
+  const defaultTextStyle =
+    includesDefaultStyle === undefined
+      ? getDefaultTextStyle()
+      : includesDefaultStyle
+        ? textDefaultOverflowStyle
+        : undefined;
+  const props: { style?: TextProps['style']; selectable?: boolean } = {};
+  const flattenedStyle = StyleSheet.flatten(style) as TextStyle | undefined;
+  let overrides: { -readonly [Key in keyof TextStyle]: TextStyle[Key] } | undefined;
+
+  if (typeof flattenedStyle?.fontWeight === 'number') {
+    overrides = { fontWeight: String(flattenedStyle.fontWeight) as TextStyle['fontWeight'] };
+  }
+  if (flattenedStyle?.userSelect != null) {
+    props.selectable = userSelectToSelectableMap[flattenedStyle.userSelect];
+    (overrides ??= {}).userSelect = undefined;
+  }
+  if (flattenedStyle?.verticalAlign != null) {
+    overrides ??= {};
+    overrides.textAlignVertical = verticalAlignToTextAlignVerticalMap[
+      flattenedStyle.verticalAlign
+    ] as TextStyle['textAlignVertical'];
+    overrides.verticalAlign = undefined;
+  }
+
+  // The renderer processes every authored entry, then RN's overrides. Do not flatten or cache this shape.
+  // Older RN types exclude recursive readonly arrays, although the renderer accepts them.
+  const normalizedStyle = (overrides ? [style, overrides] : style) as TextProps['style'];
+  if (defaultTextStyle) props.style = [defaultTextStyle, normalizedStyle];
+  else if (normalizedStyle !== undefined) props.style = normalizedStyle;
+  return props;
+}
+
+/**
+ * Mirrors the `selectionColor` normalization `Text` performs before handing off to its native host:
+ * `selectionColor != null ? processColor(selectionColor) : undefined` (Text.js). Returns a spreadable
+ * prop bag so the plugin can inline it at the JSX call site like {@link processTextStyle}.
+ *
+ * @param selectionColor - The raw `selectionColor` prop (CSS color string, int, or `PlatformColor`).
+ * @returns `{ selectionColor }` with the processed value, or an empty object when nothing should be
+ *   emitted: a `null`/`undefined` input collapses to `{}`, and a value `processColor` rejects (returns
+ *   `undefined`, e.g. an unparseable color string) is likewise omitted, mirroring `Text`'s
+ *   `if (_selectionColor !== undefined)` guard. A `null` from `processColor` (a rejected `PlatformColor`)
+ *   is preserved, since `Text` forwards that.
+ * @remarks
+ * No caching: keys are commonly primitives (`'red'`, `0xff0000ff`) that a `WeakMap` rejects, and
+ * `processColor` is already cheap. When `processColor` is unavailable (a non-RN host) the raw value is
+ * passed through rather than dropped, the least-surprising degradation.
+ */
+export function processSelectionColor(selectionColor?: ColorValue | number | null): {
+  selectionColor?: ColorValue | ProcessedColorValue | null;
+} {
+  if (selectionColor == null) return {};
+  if (processColor === undefined) return { selectionColor };
+  const processed = processColor(selectionColor);
+  return processed === undefined ? {} : { selectionColor: processed };
+}
+
+export function resolveActivityIndicatorDefault<T>(value: T | undefined, fallback: T): T {
+  return value === undefined ? fallback : value;
+}
+
+export function processActivityIndicatorStyle(style: ActivityIndicatorProps['style']) {
+  return StyleSheet.compose(activityIndicatorStyles.container, style);
+}
+
+export function processActivityIndicatorSize(size: ActivityIndicatorProps['size'] = 'small') {
+  if (size === 'small') {
+    return (activityIndicatorSmallProps ??= { style: activityIndicatorStyles.small, size: 'small' });
+  }
+  if (size === 'large') {
+    return (activityIndicatorLargeProps ??= { style: activityIndicatorStyles.large, size: 'large' });
+  }
+  return { style: { height: size, width: size }, size: undefined };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ImageSourceHelperProps = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ImageSource = Record<string, any>;
+
+function getImageSourcesFromProps(props: ImageSourceHelperProps): ImageSource | ImageSource[] | undefined {
+  const source = resolveImageAssetSource(props.source);
+  const headers: Record<string, string> = {};
+
+  if (props.crossOrigin === 'use-credentials') {
+    headers['Access-Control-Allow-Credentials'] = 'true';
+  }
+  if (props.referrerPolicy != null) {
+    headers['Referrer-Policy'] = props.referrerPolicy;
+  }
+
+  if (props.src != null) {
+    return [{ uri: props.src, headers, width: props.width, height: props.height }];
+  }
+  if (source != null && source.uri && Object.keys(headers).length > 0) {
+    const minor = getReactNativeMinor();
+    return [{ ...source, headers: minor === null || minor >= 88 ? { ...headers, ...source.headers } : headers }];
+  }
+  return source;
+}
+
+/**
+ * Normalizes dynamic `Image` source/style props for `NativeImage`.
+ *
+ * @remarks
+ * Static Image cases are still rewritten at build time. This helper is only emitted when the source
+ * or style cannot be safely flattened by Babel, so it mirrors the RN wrapper's runtime work:
+ * `resolveAssetSource`, `src`/request-header synthesis, object-vs-array source style construction,
+ * `objectFit`/`resizeMode`, and iOS tint fallback.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function processImageSourceProps(props: ImageSourceHelperProps): Record<string, any> {
+  const source = (getImageSourcesFromProps(props) || emptyImageSource) as ImageSource | ImageSource[];
+  let style;
+  let sources;
+  let headers;
+
+  if (Array.isArray(source)) {
+    // Android's wrapper propagates a single-entry array source's intrinsic width/height into the
+    // layout style; iOS never does. See {@link propagatesArraySourceDimensions} for the version gate.
+    const singleSource = source.length === 1 ? source[0] : undefined;
+    style = [
+      Platform.OS === 'android' &&
+        singleSource != null &&
+        propagatesArraySourceDimensions() && { width: singleSource.width, height: singleSource.height },
+      imageBaseStyle,
+      props.style,
+    ];
+    sources = source;
+    headers = source[0]?.headers;
+  } else {
+    const width = source.width ?? props.width;
+    const height = source.height ?? props.height;
+    style = [{ width, height }, imageBaseStyle, props.style];
+    sources = [source];
+    // An object source's inline headers only reach the top-level Android `headers` prop on the RN
+    // versions whose wrapper lifts them. See {@link liftsObjectSourceHeaders}.
+    headers = liftsObjectSourceHeaders() ? source.headers : undefined;
+  }
+
+  const flattenedStyle = StyleSheet.flatten(style);
+  const objectFit = flattenedStyle?.objectFit;
+  const resizeMode =
+    (typeof objectFit === 'string' ? objectFitToResizeMode[objectFit] : undefined) ||
+    props.resizeMode ||
+    flattenedStyle?.resizeMode ||
+    'cover';
+  const tintColor = Platform.OS === 'android' ? props.tintColor : (props.tintColor ?? flattenedStyle?.tintColor);
+  const result: Record<string, unknown> = {
+    style,
+    source: sources,
+    resizeMode,
+  };
+  const minor = getReactNativeMinor();
+  if (minor !== null && minor < (Platform.OS === 'ios' ? 88 : 85)) {
+    for (const key of ['width', 'height']) {
+      if (Object.hasOwn(props, key)) result[key] = props[key];
+    }
+  }
+  Object.assign(result, tintColor === undefined ? {} : { tintColor });
+
+  if (
+    Platform.OS === 'android' &&
+    headers !== undefined &&
+    (headers !== null || (!Array.isArray(source) && minor !== null && minor < 85))
+  )
+    result.headers = headers;
+
+  return result;
+}
+
+/**
+ * The default value `Text` resolves for `accessible` when the prop is omitted: `true` on iOS (text is
+ * an accessibility element unless opted out), `false` on Android, and `undefined` elsewhere.
+ *
+ * @remarks
+ * Runtime fallback for the common optimized `<Text>` path (no accessibility props) when the target
+ * platform is unknown at build time. When it is known (Metro reports it on the Babel caller), the
+ * plugin inlines the literal instead and this is not emitted. Evaluated per render — like `Text`'s own
+ * `Platform.select` — rather than hoisted to a constant, so it always reflects the current platform.
+ */
+export const getDefaultTextAccessible = (): boolean | undefined => Platform.select({ ios: true, android: false });
+
+/**
+ * Translates Text's ARIA visibility props. The caller applies RN < 0.85's nullish fallback.
+ */
+function applyAriaHidden(
+  ariaHidden: unknown,
+  accessibilityElementsHidden?: unknown,
+  importantForAccessibility?: unknown
+): { accessibilityElementsHidden: unknown; importantForAccessibility: unknown } {
+  return {
+    accessibilityElementsHidden: ariaHidden === undefined ? accessibilityElementsHidden : ariaHidden,
+    importantForAccessibility: ariaHidden === true ? 'no-hide-descendants' : importantForAccessibility,
+  };
+}
+
+/**
+ * Normalizes accessibility and ARIA props for runtime native components, mirroring the reconciliation
+ * `Text` performs before handing off to its native host.
+ *
+ * @param props - Accessibility and ARIA props.
+ * @returns Props with normalized accessibility fields.
+ * @remarks
+ * - Merges `aria-label` with `accessibilityLabel`
+ * - Merges ARIA state fields into `accessibilityState`
+ * - Reconciles `disabled` with `accessibilityState.disabled` (the explicit `disabled` prop wins)
+ * - Translates `aria-hidden` into `accessibilityElementsHidden` / `importantForAccessibility` (see
+ *   {@link applyAriaHidden}); `aria-hidden` wins over an explicitly-passed value
+ * - Resolves the platform-specific `accessible` default (see {@link getDefaultTextAccessible})
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function processTextAccessibilityProps(props: Record<string, any>): Record<string, any> {
+  const {
+    accessibilityLabel,
+    ['aria-label']: ariaLabel,
+    accessibilityState,
+    ['aria-busy']: ariaBusy,
+    ['aria-checked']: ariaChecked,
+    ['aria-disabled']: ariaDisabled,
+    ['aria-expanded']: ariaExpanded,
+    ['aria-selected']: ariaSelected,
+    ['aria-hidden']: ariaHidden,
+    accessible,
+    disabled,
+    ...restProperties
+  } = props;
+
+  // Merge label props: prefer the aria-label if defined.
+  const normalizedLabel = ariaLabel ?? accessibilityLabel;
+
+  const minor = getReactNativeMinor();
+  const copiesState = minor === null || minor >= 88;
+  const stateDisabled = copiesState ? (ariaDisabled ?? accessibilityState?.disabled) : undefined;
+  const resolvedDisabled = disabled ?? stateDisabled;
+  const needsStateUpdate =
+    resolvedDisabled !== stateDisabled &&
+    ((resolvedDisabled != null && resolvedDisabled !== false) || (stateDisabled != null && stateDisabled !== false));
+  let normalizedState = accessibilityState;
+  if (
+    (copiesState && needsStateUpdate) ||
+    ariaBusy != null ||
+    ariaChecked != null ||
+    ariaDisabled != null ||
+    ariaExpanded != null ||
+    ariaSelected != null
+  ) {
+    normalizedState =
+      normalizedState == null
+        ? {
+            busy: ariaBusy,
+            checked: ariaChecked,
+            disabled: copiesState ? resolvedDisabled : ariaDisabled,
+            expanded: ariaExpanded,
+            selected: ariaSelected,
+          }
+        : {
+            busy: ariaBusy ?? normalizedState.busy,
+            checked: ariaChecked ?? normalizedState.checked,
+            disabled: copiesState ? resolvedDisabled : (ariaDisabled ?? normalizedState.disabled),
+            expanded: ariaExpanded ?? normalizedState.expanded,
+            selected: ariaSelected ?? normalizedState.selected,
+          };
+  }
+
+  // RN 0.85–0.87 mutates conflicting state; 0.88 copies only the five native fields.
+  const legacy = minor !== null && minor < 85;
+  const mergedDisabled = normalizedState?.disabled;
+  const normalizedDisabled = copiesState ? resolvedDisabled : (disabled ?? mergedDisabled);
+  if (
+    !copiesState &&
+    normalizedDisabled !== mergedDisabled &&
+    ((normalizedDisabled != null && normalizedDisabled !== false) ||
+      (mergedDisabled != null && mergedDisabled !== false))
+  ) {
+    if (legacy || normalizedState == null) normalizedState = { ...normalizedState, disabled: normalizedDisabled };
+    else normalizedState.disabled = normalizedDisabled;
+  }
+
+  const { accessibilityElementsHidden: normalizedElementsHidden, importantForAccessibility: normalizedImportant } =
+    applyAriaHidden(
+      legacy && ariaHidden === null ? undefined : ariaHidden,
+      restProperties.accessibilityElementsHidden,
+      restProperties.importantForAccessibility
+    );
+
+  // Resolve `accessible` exactly as `Text` does: opt-out on iOS, off by default on Android. The
+  // Android pressable case (`onPress`/`onLongPress`) never applies — press handlers bail out of
+  // optimization — so an omitted prop falls back to the platform default.
+  const normalizedAccessible = Platform.select({
+    ios: accessible !== false,
+    android: accessible ?? false,
+    default: accessible,
+  });
+
+  const result: Record<string, unknown> = {
+    ...restProperties,
+    accessible: normalizedAccessible,
+    disabled: normalizedDisabled,
+  };
+  if (legacy || normalizedLabel !== undefined) result.accessibilityLabel = normalizedLabel;
+  if (legacy || normalizedState !== undefined) result.accessibilityState = normalizedState;
+  if (legacy || ariaHidden !== undefined) {
+    result.accessibilityElementsHidden = normalizedElementsHidden;
+  }
+  if (legacy || ariaHidden === true) {
+    result.importantForAccessibility = normalizedImportant;
+  }
+  return result;
+}
+
+/**
+ * Normalizes accessibility and ARIA props for an optimized `NativeView`, mirroring the reconciliation
+ * the `View` wrapper performs before handing off to its native host.
+ *
+ * @param props - Accessibility and ARIA props.
+ * @returns Props with the ARIA cluster translated/aggregated into their native counterparts.
+ * @remarks
+ * Unlike {@link processTextAccessibilityProps} (the `Text` helper) there is no `accessible` default and no
+ * `disabled` reconciliation — the `View` wrapper does neither. A static `tabIndex` is folded to
+ * `focusable` at build time; only a dynamic `tabIndex` reaches this helper.
+ * - `aria-labelledby` → `accessibilityLabelledBy` (comma-split into a string array)
+ * - `aria-label` → `accessibilityLabel`
+ * - `aria-live` → `accessibilityLiveRegion` (`'off'` → `'none'`)
+ * - `aria-hidden` → `accessibilityElementsHidden` (+ `importantForAccessibility` when strictly `true`)
+ * - `tabIndex` → `focusable` (`!tabIndex`)
+ * - ARIA state fields aggregated into `accessibilityState` (`ariaX ?? accessibilityState?.x`)
+ * - ARIA value fields aggregated into `accessibilityValue` (`ariaX ?? accessibilityValue?.x`)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function processViewAccessibilityProps(props: Record<string, any>): Record<string, any> {
+  const {
+    accessibilityState,
+    accessibilityValue,
+    ['aria-busy']: ariaBusy,
+    ['aria-checked']: ariaChecked,
+    ['aria-disabled']: ariaDisabled,
+    ['aria-expanded']: ariaExpanded,
+    ['aria-hidden']: ariaHidden,
+    ['aria-label']: ariaLabel,
+    ['aria-labelledby']: ariaLabelledBy,
+    ['aria-live']: ariaLive,
+    ['aria-selected']: ariaSelected,
+    ['aria-valuemax']: ariaValueMax,
+    ['aria-valuemin']: ariaValueMin,
+    ['aria-valuenow']: ariaValueNow,
+    ['aria-valuetext']: ariaValueText,
+    tabIndex,
+    ...restProperties
+  } = props;
+
+  const result = restProperties;
+
+  // Optional chaining (not a bare `!== undefined` guard) so a runtime-null `aria-labelledby` is
+  // skipped rather than throwing on `.split`, exactly as the wrapper does.
+  const parsedAriaLabelledBy = ariaLabelledBy?.split(/\s*,\s*/g);
+  if (parsedAriaLabelledBy !== undefined) result.accessibilityLabelledBy = parsedAriaLabelledBy;
+  if (ariaLabel !== undefined) result.accessibilityLabel = ariaLabel;
+  if (ariaLive !== undefined) result.accessibilityLiveRegion = ariaLive === 'off' ? 'none' : ariaLive;
+  if (ariaHidden !== undefined) {
+    result.accessibilityElementsHidden = ariaHidden;
+    if (ariaHidden === true) result.importantForAccessibility = 'no-hide-descendants';
+  }
+  if (tabIndex !== undefined) result.focusable = !tabIndex;
+
+  if (
+    accessibilityState != null ||
+    ariaBusy != null ||
+    ariaChecked != null ||
+    ariaDisabled != null ||
+    ariaExpanded != null ||
+    ariaSelected != null
+  ) {
+    result.accessibilityState = {
+      busy: ariaBusy ?? accessibilityState?.busy,
+      checked: ariaChecked ?? accessibilityState?.checked,
+      disabled: ariaDisabled ?? accessibilityState?.disabled,
+      expanded: ariaExpanded ?? accessibilityState?.expanded,
+      selected: ariaSelected ?? accessibilityState?.selected,
+    };
+  }
+
+  if (
+    accessibilityValue != null ||
+    ariaValueMax != null ||
+    ariaValueMin != null ||
+    ariaValueNow != null ||
+    ariaValueText != null
+  ) {
+    result.accessibilityValue = {
+      max: ariaValueMax ?? accessibilityValue?.max,
+      min: ariaValueMin ?? accessibilityValue?.min,
+      now: ariaValueNow ?? accessibilityValue?.now,
+      text: ariaValueText ?? accessibilityValue?.text,
+    };
+  }
+
+  return result;
+}
+
+/**
+ * Normalizes the Image wrapper's accessibility aliases before props reach `NativeImage`.
+ *
+ * @remarks
+ * Image's rules are close to View's ARIA merge, but not identical: `alt` is an accessibilityLabel
+ * fallback and also forces `accessible` on. Keep this separate from `processViewAccessibilityProps`
+ * so those Image-only precedence rules stay explicit.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function processImageAccessibilityProps(props: Record<string, any>): Record<string, any> {
+  const {
+    alt,
+    accessible,
+    accessibilityLabel,
+    accessibilityLabelledBy,
+    accessibilityState,
+    importantForAccessibility,
+    ['aria-label']: ariaLabel,
+    ['aria-labelledby']: ariaLabelledBy,
+    ['aria-busy']: ariaBusy,
+    ['aria-checked']: ariaChecked,
+    ['aria-disabled']: ariaDisabled,
+    ['aria-expanded']: ariaExpanded,
+    ['aria-hidden']: ariaHidden,
+    ['aria-selected']: ariaSelected,
+    ...restProperties
+  } = props;
+
+  const result = restProperties;
+  const minor = getReactNativeMinor();
+  const modern = minor === null || minor >= 88;
+  if (modern) {
+    for (const key of ['accessible', 'accessibilityLabel', 'accessibilityLabelledBy', 'importantForAccessibility']) {
+      if (Object.hasOwn(props, key)) result[key] = props[key];
+    }
+    if (ariaLabel != null) result.accessibilityLabel = ariaLabel;
+    else if (alt != null && accessibilityLabel == null) result.accessibilityLabel = alt;
+    if (ariaLabelledBy != null) result.accessibilityLabelledBy = ariaLabelledBy;
+    if (Platform.OS === 'ios' && ariaHidden === true) result.accessible = false;
+    else if (alt != null) result.accessible = true;
+    if (Platform.OS !== 'ios' && ariaHidden === true) result.importantForAccessibility = 'no-hide-descendants';
+  } else {
+    const normalizedLabel = ariaLabel ?? accessibilityLabel ?? alt;
+    if (normalizedLabel !== undefined) result.accessibilityLabel = normalizedLabel;
+
+    if (Platform.OS === 'android') {
+      const normalizedLabelledBy = ariaLabelledBy ?? accessibilityLabelledBy;
+      if (normalizedLabelledBy !== undefined) result.accessibilityLabelledBy = normalizedLabelledBy;
+    } else if (accessibilityLabelledBy !== undefined) {
+      result.accessibilityLabelledBy = accessibilityLabelledBy;
+    }
+
+    // RN 0.85 changed Android from undefined checks to nullish checks.
+    if (Platform.OS === 'ios') {
+      if (ariaHidden === true) {
+        result.accessible = false;
+      } else if (alt !== undefined) {
+        result.accessible = true;
+      } else if (accessible !== undefined) {
+        result.accessible = accessible;
+      }
+    } else {
+      const usesUndefinedChecks = minor !== null && minor <= 84;
+      if (usesUndefinedChecks ? alt !== undefined : alt != null) {
+        result.accessible = true;
+      } else if (usesUndefinedChecks ? accessible !== undefined : accessible != null) {
+        result.accessible = accessible;
+      }
+    }
+
+    if (ariaHidden === true && Platform.OS !== 'ios') {
+      result.importantForAccessibility = 'no-hide-descendants';
+    } else if (importantForAccessibility !== undefined) {
+      result.importantForAccessibility = importantForAccessibility;
+    }
+  }
+
+  if (!modern && Platform.OS === 'ios' && accessibilityState !== undefined) {
+    result.accessibilityState = accessibilityState;
+  } else if (
+    accessibilityState != null ||
+    ariaBusy != null ||
+    ariaChecked != null ||
+    ariaDisabled != null ||
+    ariaExpanded != null ||
+    ariaSelected != null
+  ) {
+    result.accessibilityState = {
+      busy: ariaBusy ?? accessibilityState?.busy,
+      checked: ariaChecked ?? accessibilityState?.checked,
+      disabled: ariaDisabled ?? accessibilityState?.disabled,
+      expanded: ariaExpanded ?? accessibilityState?.expanded,
+      selected: ariaSelected ?? accessibilityState?.selected,
+    };
+  }
+
+  return result;
+}
+
+export * from './types';
+export * from './utils/constants';
+export * from './components/native-text';
+export * from './components/native-view';
+export { NativeViewWithContext } from './components/native-view-with-context';
+export { NativeImage } from './components/native-image';
+export { NativeActivityIndicator } from './components/native-activity-indicator';

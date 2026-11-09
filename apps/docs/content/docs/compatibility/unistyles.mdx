@@ -1,0 +1,48 @@
+---
+title: Unistyles Support
+description: Keep Unistyles styling working on Boost-optimized components.
+---
+
+React Native Boost is compatible with Unistyles v3. Previous versions of Unistyles are untested and not officially supported.
+
+## Setup
+
+Enable Boost's Unistyles support layer in `metro.config.js`:
+
+```js
+module.exports = withBoostConfig(config, {
+  integrations: { unistyles: 'on' },
+});
+```
+
+Set `integrations.unistyles` to `off` when Unistyles is installed in your project's dependencies, but not actually used in code.
+
+<Callout type="info" title="Auto-detection">
+  React Native Boost can auto-detect Unistyles and enable this mode automatically if you haven't explicitly disabled it. However, this auto-detection is fragile and Boost will therefore log a warning to the console. Explicitly set the config flag as shown above to silence the warning.
+</Callout>
+
+## How it works
+
+Unistyles updates styles natively, outside of React.
+
+In Unistyles mode, Boost looks at each `Text`/`View`'s `style` and routes accordingly:
+
+- **A Unistyles style** (from `StyleSheet.create` imported from `react-native-unistyles`) → rewritten to Unistyles' own lean host, keeping Unistyles' reactivity, while still providing Boost's performance benefits.
+- **A plain React Native style** (an object literal, or a `StyleSheet.create` from `react-native`) →
+  optimized to Boost's standard native host, exactly as in a non-Unistyles app.
+- **A style Boost can't resolve** (e.g. `style={props.style}`, a function call, a conditional) → left
+  untouched. When Boost can't reliably tell if it's a Unistyles style arriving from elsewhere or a plain style object, it has to skip it. When Unistyles mode is disabled, this does not apply, and all components (that don't bail for other reasons) are optimized, no matter where their `style` comes from.
+
+### Known limitations
+
+The native components React Native Boost rewrites your components to don't perform some of the prop and style processing the standard JS-based wrapper components do. Without Unistyles, React Native Boost can do this processing for you. With Unistyles, this isn't possible, unfortunately. Therefore:
+
+| Avoid | Use |
+| --- | --- |
+| `fontWeight: 700` (a number) | `fontWeight: '700'` (a string) |
+| `userSelect: 'none'` | the `selectable` prop, e.g. `selectable={false}` |
+| `verticalAlign: 'middle'` | `textAlignVertical: 'center'` |
+
+Boost forwards a Unistyles style to the native host untouched (this is what preserves Unistyles'
+reactivity), so the raw forms reach the host as-is. The right-hand values are already in their native
+form, so they work whether or not Unistyles is in play. These only affect `Text`.

@@ -1,0 +1,114 @@
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { transformSync, type TransformCaller } from '@babel/core';
+import { pluginTester } from 'babel-plugin-tester';
+import { describe, expect, it } from 'vitest';
+import boostPlugin from '../../../index';
+import { formatTestResult } from '../../../utils/format-test-result';
+import { generateTestPlugin } from '../../../utils/generate-test-plugin';
+import { animatedValueInitializationOptimizer } from '..';
+
+const reactNativePackageJson = createRequire(import.meta.url).resolve('react-native/package.json');
+
+pluginTester({
+  plugin: generateTestPlugin(animatedValueInitializationOptimizer, {}, 'ios', 87),
+  title: 'animated value initialization',
+  fixtures: path.resolve(import.meta.dirname, 'fixtures'),
+  formatResult: formatTestResult,
+});
+
+function transformWithOptimizer(
+  source: string,
+  platform: 'ios' | 'web',
+  reactNativeMinor: number,
+  uniwind: 'on' | 'off' = 'off'
+): string {
+  return transformSync(source, {
+    configFile: false,
+    babelrc: false,
+    plugins: [
+      generateTestPlugin(
+        animatedValueInitializationOptimizer,
+        { integrations: { uniwind } },
+        platform,
+        reactNativeMinor
+      ),
+    ],
+  })!.code!;
+}
+
+function transformWithBoost(source: string, enabled = true): string {
+  return transformSync(source, {
+    configFile: false,
+    babelrc: false,
+    caller: { name: 'test', platform: 'ios' } as TransformCaller,
+    plugins: [
+      [
+        boostPlugin,
+        {
+          logLevel: 'silent',
+          target: { reactNative: { packageJson: reactNativePackageJson } },
+          optimizations: enabled ? undefined : { 'animated-value-initialization': 'off' },
+        },
+      ],
+    ],
+  })!.code!;
+}
+
+const source = `
+  import { useRef, useState } from 'react';
+  import { Animated } from 'react-native';
+  const value = useRef(new Animated.Value(0)).current;
+  const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const color = useRef(new Animated.Color('red')).current;
+  const [statePosition] = useState(new Animated.ValueXY());
+`;
+
+describe('animated value initialization integration', () => {
+  it('preserves repeated hook references through the React Native module transform', () => {
+    const output = transformSync(
+      `import { useRef } from 'react';
+      import { Animated } from 'react-native';
+      function Example() {
+        const first = useRef(new Animated.Value(0)).current;
+        const second = useRef(new Animated.Value(1)).current;
+      }`,
+      {
+        configFile: false,
+        babelrc: false,
+        compact: false,
+        presets: ['@react-native/babel-preset'],
+        plugins: [generateTestPlugin(animatedValueInitializationOptimizer, {}, 'ios', 87)],
+      }
+    )!.code!;
+
+    expect(output).toContain('(0, _reactNative.useAnimatedValue)(0)');
+    expect(output).toContain('(0, _reactNative.useAnimatedValue)(1)');
+  });
+
+  it.each(['on', 'off'] as const)('uses only available hooks with Uniwind %s', (uniwind) => {
+    const output = transformWithOptimizer(source, 'ios', 84, uniwind);
+
+    expect(output).toContain('_useAnimatedValue(0)');
+    expect(output).toContain('useRef(new Animated.ValueXY({');
+    expect(output).toContain("useRef(new Animated.Color('red')).current");
+    expect(output).not.toContain('useAnimatedValueXY');
+    expect(output).not.toContain('useAnimatedColor');
+    expect(output).toContain('useState(() => new Animated.ValueXY())');
+  });
+
+  it('does not change web builds', () => {
+    const output = transformWithOptimizer(source, 'web', 87);
+
+    expect(output).toContain('useRef(new Animated.Value(0)).current');
+    expect(output).toContain('useState(new Animated.ValueXY())');
+  });
+
+  it('runs by default and respects its optimization setting', () => {
+    expect(transformWithBoost(source)).toContain('_useAnimatedValue(0)');
+
+    const disabledOutput = transformWithBoost(source, false);
+    expect(disabledOutput).toContain('useRef(new Animated.Value(0)).current');
+    expect(disabledOutput).toContain('useState(new Animated.ValueXY())');
+  });
+});

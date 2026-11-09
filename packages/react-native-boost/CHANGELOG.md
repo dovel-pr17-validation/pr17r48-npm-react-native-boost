@@ -1,0 +1,374 @@
+# Changelog
+
+## [2.0.4](https://github.com/kuatsu/react-native-boost/compare/v2.0.3...v2.0.4) (2026-10-26)
+
+### ✨ Features
+
+* **example:** support landscape mode ([45d496a](https://github.com/kuatsu/react-native-boost/commit/45d496ab1ebd600b9eb95e4a5433a6925bf90c3a))
+
+### 🐛 Bug Fixes
+
+* restore Uniwind 1.13.x compatibility ([83fb970](https://github.com/kuatsu/react-native-boost/commit/83fb9709904750531744a2a734dff5375222b195))
+
+## [2.0.3](https://github.com/kuatsu/react-native-boost/compare/v2.0.2...v2.0.3) (2026-10-02)
+
+### 🐛 Bug Fixes
+
+* prevent shared import references from corrupting Babel output ([9a6f6b2](https://github.com/kuatsu/react-native-boost/commit/9a6f6b2120fdf9aeb36066d06a76b21e9f438b85)), closes [#115](https://github.com/kuatsu/react-native-boost/issues/115)
+
+## [2.0.2](https://github.com/kuatsu/react-native-boost/compare/v2.0.1...v2.0.2) (2026-09-18)
+
+### 🐛 Bug Fixes
+
+* **native-view:** fix keyed view warning log ([c039ab3](https://github.com/kuatsu/react-native-boost/commit/c039ab32d0a6212d3d9cab9ecbe2fb09915bd246)), closes [#114](https://github.com/kuatsu/react-native-boost/issues/114)
+
+## [2.0.1](https://github.com/kuatsu/react-native-boost/compare/v2.0.0...v2.0.1) (2026-09-14)
+
+### 🐛 Bug Fixes
+
+* **animated-wrapper-removal:** keep wrappers when parents may add ([a186c7f](https://github.com/kuatsu/react-native-boost/commit/a186c7f6523a55c9d85fc94376ee6bde11b0e3b4))
+
+## [2.0.0](https://github.com/kuatsu/react-native-boost/compare/v1.7.1...v2.0.0) (2026-09-13)
+
+### ⚠ BREAKING CHANGES
+
+* **plugin:** redesign configuration API
+
+### ✨ Features
+
+* add ActivityIndicator optimizer ([0c914dd](https://github.com/kuatsu/react-native-boost/commit/0c914dd6ef096386ccb8ca694404642d0970d809))
+* add support for React Native 0.88 ([3d9c0c9](https://github.com/kuatsu/react-native-boost/commit/3d9c0c9f45085efaccd5e9a6654decbab913259a))
+* **animated-value-initialization:** lazily create animated values ([e01a3f6](https://github.com/kuatsu/react-native-boost/commit/e01a3f6084b52e7332e0b0711b71bca883f6064c))
+* **example:** drive mount benchmark automatically ([ef12fe2](https://github.com/kuatsu/react-native-boost/commit/ef12fe2bfc057c5bd5ef2358fc5fb5c1842ae931))
+* **image:** optimize load-event callbacks ([296493b](https://github.com/kuatsu/react-native-boost/commit/296493bd3d2028e082d56f646a16af5b52417a67))
+* **metro:** add config adapter ([613872b](https://github.com/kuatsu/react-native-boost/commit/613872bf0be719ca1c4a1a46399ffddfe44f2815))
+* **metro:** resolve cross-file component ancestors ([1cdee30](https://github.com/kuatsu/react-native-boost/commit/1cdee30ffd1c31cc12c8f4630eb0ae8e075949c4))
+* **platform-folding:** fold Platform select calls and branches ([efef2be](https://github.com/kuatsu/react-native-boost/commit/efef2bea6e11ca9c71b3c9c51836dee5645161ad))
+* **platform-folding:** resolve platform branches and expressions ([639479a](https://github.com/kuatsu/react-native-boost/commit/639479afbe28c3c87f3d046287bbe15850103dba))
+* **plugin:** classify react-native ancestors ([598e790](https://github.com/kuatsu/react-native-boost/commit/598e7904d4c047cbeba7f47b49a22a26fb9aad14))
+* **plugin:** optimize literal JSX spread props ([a0796a2](https://github.com/kuatsu/react-native-boost/commit/a0796a2245acdcfb0ed9cb62f97fbe9b9dbca77b))
+* **plugin:** precompute static accessibility props ([acc9cae](https://github.com/kuatsu/react-native-boost/commit/acc9caedac17f4fe48e10ba7519de4eb70822644))
+* **plugin:** redesign configuration API ([47199db](https://github.com/kuatsu/react-native-boost/commit/47199dbbab9c5efb5eb7a8b283a5acaffa43953d))
+* **plugin:** support Uniwind integration ([ec287cd](https://github.com/kuatsu/react-native-boost/commit/ec287cd0c4dd318fdf6607f2022ce2c96f3b54d9))
+* resolve spread helper return keys ([4f8a819](https://github.com/kuatsu/react-native-boost/commit/4f8a8194c9c27de96a48f5cda9df30474c4882db))
+* **static-animated:** remove wrappers without animated values ([82625d6](https://github.com/kuatsu/react-native-boost/commit/82625d6462fc608892f633161e2e38ab1b21cc2d))
+* **stylesheet-operations:** evaluate static StyleSheet operations ([85389c8](https://github.com/kuatsu/react-native-boost/commit/85389c87b259f7014ac6bf55fe872e7d6335ff87))
+* **view:** preserve runtime Text context if needed ([b26de72](https://github.com/kuatsu/react-native-boost/commit/b26de728315fc533efe5ed90766d7ed4c0d2bc52))
+
+### ⚡ Performance Improvements
+
+* **metro:** reduce redundant bundling transforms and analyses ([2260b86](https://github.com/kuatsu/react-native-boost/commit/2260b86635abbbf096458e83b893183e0a709c90))
+* **native-activity-indicator:** remove text ancestry checks ([6a34d7a](https://github.com/kuatsu/react-native-boost/commit/6a34d7a9ca8247f91521e8aa705fb3a2681e1baa))
+* **native-image:** hoist static native image sources ([7c19af6](https://github.com/kuatsu/react-native-boost/commit/7c19af65d2e6908aed632e5043da41144e906fa7))
+* **native-image:** narrow text ancestry checks ([4e6b00d](https://github.com/kuatsu/react-native-boost/commit/4e6b00d7c0906bd09a0340501939ad53c7ba396b))
+* **native-image:** optimize static srcSet sources ([c280ac2](https://github.com/kuatsu/react-native-boost/commit/c280ac2435fb6f52406e38a36f755c0041fc20d7))
+* **native-text:** preprocess selectionColor ([04b72b6](https://github.com/kuatsu/react-native-boost/commit/04b72b66a410cc3107f0e95ffe23a9ccfcd79cac))
+* **plugin:** replace Object.assign with object spread ([2ac8ec5](https://github.com/kuatsu/react-native-boost/commit/2ac8ec5a98852a84f173800842121f4f64839b87))
+* **plugin:** resolve version-dependent behavior at build time ([21f60a2](https://github.com/kuatsu/react-native-boost/commit/21f60a2c9ca494ab2ee5d941de2c4f5bd53d73b2))
+
+### 🐛 Bug Fixes
+
+* fix type errors ([8c1298c](https://github.com/kuatsu/react-native-boost/commit/8c1298cffb53f83ec9a145267c126ce5fc6ba22c))
+* fix TypeScript 7 type errors ([9cd76d4](https://github.com/kuatsu/react-native-boost/commit/9cd76d479fda3ef0ec3dcc345fa97905fe96d583))
+* **native-text:** bail when runtime text context is unknown ([5778bb8](https://github.com/kuatsu/react-native-boost/commit/5778bb80c738fc01260d9e56eb481026bf63885a))
+* **platform-folding:** preserve select value evaluations ([8ab642e](https://github.com/kuatsu/react-native-boost/commit/8ab642eca3173e44dfc67c434b2c8059a8da8c98))
+* **plugin:** allow boost-force decorator more often ([601cb89](https://github.com/kuatsu/react-native-boost/commit/601cb89fd37b5bc761fa10f84e7e264b0d0d7bd9))
+* **plugin:** preserve text context through wrappers ([7568253](https://github.com/kuatsu/react-native-boost/commit/75682539dd86ef3b5681dd715f50bb5b7e97c418))
+* preserve ancestor safety before React Compiler lowering ([e712029](https://github.com/kuatsu/react-native-boost/commit/e712029e6f5c8f5f86d19671a3f97905ef4045d7))
+* restore React Native version matrix compatibility ([fb7c4fc](https://github.com/kuatsu/react-native-boost/commit/fb7c4fc12cd814f45d1fe1146778a0edd107ee30))
+* **text:** preserve React Native accessibility and style parity ([5e5477c](https://github.com/kuatsu/react-native-boost/commit/5e5477c7040c50907044e20ce6718b61fad075b0))
+
+## [1.7.1](https://github.com/kuatsu/react-native-boost/compare/v1.7.0...v1.7.1) (2026-09-03)
+
+### Bug Fixes
+
+* **native-text:** bail when runtime text context is unknown ([8fe5af9](https://github.com/kuatsu/react-native-boost/commit/8fe5af9c3a4769e42badac39d7fd18f8f869f3bd))
+
+# [1.7.0](https://github.com/kuatsu/react-native-boost/compare/v1.6.0...v1.7.0) (2026-09-03)
+
+
+### Bug Fixes
+
+* fix changelog generation ([da0ec8f](https://github.com/kuatsu/react-native-boost/commit/da0ec8fb3e885ebd87296e5b0f1f8caa0b4174b6))
+* **image:** fix accessibility parity issues ([c4db0ca](https://github.com/kuatsu/react-native-boost/commit/c4db0cab8239a60e21a86e07144579e1de932346))
+* **image:** match legacy Android accessibility handling ([559f65c](https://github.com/kuatsu/react-native-boost/commit/559f65cd1b0720c9b32322d31bc856e3c396ebff))
+* **runtime:** replace feature flag imports with version defaults ([df21e58](https://github.com/kuatsu/react-native-boost/commit/df21e5814a0be8722618bf9de8c115df1a266d38))
+* **text:** avoid mutating flattened styles ([4f99942](https://github.com/kuatsu/react-native-boost/commit/4f99942e29527720af922a0c5b11bd56e298fe36))
+
+
+### Features
+
+* **image:** manually register host and promote optimizer to default ([82dca04](https://github.com/kuatsu/react-native-boost/commit/82dca0492c18998ff01eebbaf4bcc56801181f4d))
+* update to react-native 0.86 ([#77](https://github.com/kuatsu/react-native-boost/issues/77)) ([3c3f9b2](https://github.com/kuatsu/react-native-boost/commit/3c3f9b2cf9f15a536f5db3a9107b9a2d16ddc649))
+
+# [1.6.0](https://github.com/kuatsu/react-native-boost/compare/v1.5.0...v1.6.0) (2026-07-11)
+
+
+### Bug Fixes
+
+* **text:** fix two parity edge cases ([#75](https://github.com/kuatsu/react-native-boost/issues/75)) ([cc94e0e](https://github.com/kuatsu/react-native-boost/commit/cc94e0ecba0f67a23d498ca9d4cf717ddf493b88))
+* **text:** preserve style selectable precedence ([#76](https://github.com/kuatsu/react-native-boost/issues/76)) ([b5ff429](https://github.com/kuatsu/react-native-boost/commit/b5ff429ed778948a03d76fc357c9052e464075cf))
+
+
+### Features
+
+* **image:** add opt-in Image optimizer ([#66](https://github.com/kuatsu/react-native-boost/issues/66)) ([0edb5da](https://github.com/kuatsu/react-native-boost/commit/0edb5da8dc75461e0c9f765a1df6bac394be5a96))
+
+# [1.5.0](https://github.com/kuatsu/react-native-boost/compare/v1.4.0...v1.5.0) (2026-06-24)
+
+
+### Bug Fixes
+
+* fix nested optimizations that were incorrectly bailing ([4f68bce](https://github.com/kuatsu/react-native-boost/commit/4f68bce436591bff3cc03c589517014b3b63ebf3))
+
+
+### Features
+
+* **example:** unistyles test screen ([654012d](https://github.com/kuatsu/react-native-boost/commit/654012df7d7089233298174d1cfebaeb5c8fabbe))
+* unistyles v3 support ([5adec92](https://github.com/kuatsu/react-native-boost/commit/5adec9220f0a49ab4a037e416ee9559928bd0f56))
+
+# [1.4.0](https://github.com/kuatsu/react-native-boost/compare/v1.3.0...v1.4.0) (2026-06-24)
+
+
+### Bug Fixes
+
+* **text:** mirror selectionColor omission for invalid and bare values ([6a4ab42](https://github.com/kuatsu/react-native-boost/commit/6a4ab4286a848a831deef26d85ee6c671678aca7))
+
+
+### Features
+
+* **text:** translate aria-hidden to native a11y props instead of bailing ([419a883](https://github.com/kuatsu/react-native-boost/commit/419a8837dedc4a88fa628726abe9bdd76269c465))
+
+
+### Performance Improvements
+
+* **plugin:** emit object literal instead of Object.assign when no spread ([bb98cc7](https://github.com/kuatsu/react-native-boost/commit/bb98cc730e93129f1c446662a8802b2311faaa08))
+
+# [1.3.0](https://github.com/kuatsu/react-native-boost/compare/v1.2.0...v1.3.0) (2026-06-22)
+
+
+### Bug Fixes
+
+* **text:** bail on normalized/style props in resolvable spreads ([f89e22e](https://github.com/kuatsu/react-native-boost/commit/f89e22e6b60abc08775b830ae88c288da681d5ef)), closes [#27](https://github.com/kuatsu/react-native-boost/issues/27)
+* **text:** clamp dynamic numberOfLines ([3819356](https://github.com/kuatsu/react-native-boost/commit/3819356733b8ce0237317b7d9cde1f8d88c8acf3)), closes [#28](https://github.com/kuatsu/react-native-boost/issues/28)
+* **text:** fix `userSelect` / `selectable` prop ordering ([0a4ec0c](https://github.com/kuatsu/react-native-boost/commit/0a4ec0ce1ae9522464ec85c2fb86ead8322798a1)), closes [#29](https://github.com/kuatsu/react-native-boost/issues/29)
+
+
+### Features
+
+* **text:** inline static styles at build time, skipping a runtime call ([d012744](https://github.com/kuatsu/react-native-boost/commit/d0127446ef22a81e4abecd19e17ffbd877608f0b))
+* translate View aria/tabIndex props & handle id instead of bailing ([a23e8ef](https://github.com/kuatsu/react-native-boost/commit/a23e8ef8e048fd8fee498cb1d16806445c315d78))
+
+# [1.2.0](https://github.com/kuatsu/react-native-boost/compare/v1.1.0...v1.2.0) (2026-06-21)
+
+
+### Bug Fixes
+
+* **benchmark:** fail fast on bad CLI flags and bound fibers subprocess ([39e6cfe](https://github.com/kuatsu/react-native-boost/commit/39e6cfe382bdcd8e3577e9cfb3b3fef0620e613c))
+* **example:** fix broken iOS debug build ([93bd413](https://github.com/kuatsu/react-native-boost/commit/93bd4138913c6b87242264ba44e1d6e9f352b5ea))
+* fix some a11y props being dropped on optimized components ([150c6a4](https://github.com/kuatsu/react-native-boost/commit/150c6a456a5d0402b6662a427ae63b9fbf032d01))
+* **text:** don't drop the `accessible` default on styled Text ([f48a8ec](https://github.com/kuatsu/react-native-boost/commit/f48a8ec6148ebfccd1f333c752d032ad9c5b36c9))
+* **text:** match RN Text accessibility/disabled reconciliation ([daf0156](https://github.com/kuatsu/react-native-boost/commit/daf0156095d3d8f4d79fd76bd2b1c90b5987f053))
+* **time-to-render:** fix broken Android build ([c815914](https://github.com/kuatsu/react-native-boost/commit/c8159141d96f1127941ccfdba1d6ce7c66bc62bc))
+
+
+### Features
+
+* **benchmark:** `reduceDefaultPropsInText` benchmark + thermal-robustness ([#25](https://github.com/kuatsu/react-native-boost/issues/25)) ([c9cbc5d](https://github.com/kuatsu/react-native-boost/commit/c9cbc5d2638d463f2752e221226b88100ea6d477))
+* **benchmark:** add cross-platform FPS + fiber benchmark suite ([35ea313](https://github.com/kuatsu/react-native-boost/commit/35ea31320bae597b79ebc9735cf13c2e990d58e1))
+* **example:** add example orderbook app showcasing FPS improvement ([f14604e](https://github.com/kuatsu/react-native-boost/commit/f14604e3c712f86bf02cf15dddefe0617051f736))
+* **text:** bail on Text and unknown ancestors ([ab25510](https://github.com/kuatsu/react-native-boost/commit/ab25510658d3407479e4a3e7c30de4b458f0875c))
+* **text:** optimize Text with primitive children beyond strings ([eb61bdb](https://github.com/kuatsu/react-native-boost/commit/eb61bdbfa5678886ca472057631d4481ebe063c1))
+* **view:** optimize Views with a style prop ([a3a2125](https://github.com/kuatsu/react-native-boost/commit/a3a21254447abf939db3371de78c7b836022225b))
+
+
+### Performance Improvements
+
+* **text:** resolve the `accessible` default at build time ([c85fd7e](https://github.com/kuatsu/react-native-boost/commit/c85fd7ebcf1308198341ba210ee4a6907835b8c2))
+
+# [1.1.0](https://github.com/kuatsu/react-native-boost/compare/v1.0.0...v1.1.0) (2026-03-18)
+
+
+### Features
+
+* add `[@boost-force](https://github.com/boost-force)` decorator to enforce optimization ([eb7357c](https://github.com/kuatsu/react-native-boost/commit/eb7357c1fc296aa62658dcc010254c6f1b08e986))
+
+# [1.0.0](https://github.com/kuatsu/react-native-boost/compare/v0.6.2...v1.0.0) (2026-02-27)
+
+
+### Bug Fixes
+
+* **example:** fix benchmark state machine ([48bb689](https://github.com/kuatsu/react-native-boost/commit/48bb6891d27c6cd7971a45f36d8eda9278b4a54f))
+* **example:** fix node_modules being optimized ([9558680](https://github.com/kuatsu/react-native-boost/commit/9558680b6ce0221a367ef64f47cc0ca4dc1bbb67))
+* **view:** bail on unknown ancestors by default and add opt-in flag ([#17](https://github.com/kuatsu/react-native-boost/issues/17)) ([bf24fbd](https://github.com/kuatsu/react-native-boost/commit/bf24fbd3d241b0a38d91c5b2ff736c610b7e4132))
+
+
+### Features
+
+* bail on less props ([1bb7758](https://github.com/kuatsu/react-native-boost/commit/1bb77587185fd6ab5d8d7cb238b5c4dea46553ff))
+* **example:** prettier benchmark app ([51e47fd](https://github.com/kuatsu/react-native-boost/commit/51e47fd321507e9d461fd38951cbfaf058ececf2))
+* improve logging ([3c9fef4](https://github.com/kuatsu/react-native-boost/commit/3c9fef482c7f20056779cc02bf6e2ea010c59f69))
+* skip optimizing Text inside Expo Router Link with `asChild` ([#16](https://github.com/kuatsu/react-native-boost/issues/16)) ([ddc606d](https://github.com/kuatsu/react-native-boost/commit/ddc606d780863b199ab9bf3e6079fb00a366e066))
+* **text:** bail less, statically handle userSelect, improve spread prop ([5e93ae5](https://github.com/kuatsu/react-native-boost/commit/5e93ae545d63b9258f27f6831adfa6bba899a124))
+
+## [0.6.2](https://github.com/kuatsu/react-native-boost/compare/v0.6.1...v0.6.2) (2025-06-11)
+
+
+### Bug Fixes
+
+* fixed react-native 0.79 style flattening ([7b7a5a4](https://github.com/kuatsu/react-native-boost/commit/7b7a5a4def44676382014dfc26f9df1bc989f81e)), closes [#10](https://github.com/kuatsu/react-native-boost/issues/10)
+
+
+### Reverts
+
+* remove unused package export ([973084e](https://github.com/kuatsu/react-native-boost/commit/973084ee58f9473ffff23a62051d6d99da641456))
+
+## [0.6.1](https://github.com/kuatsu/react-native-boost/compare/v0.6.0...v0.6.1) (2025-06-11)
+
+
+### Bug Fixes
+
+* fixed type errors in tests ([59e3925](https://github.com/kuatsu/react-native-boost/commit/59e392562331e7e150caad431adc5569f9b7a88d))
+
+# [0.6.0](https://github.com/kuatsu/react-native-boost/compare/v0.5.7...v0.6.0) (2025-06-11)
+
+
+### Bug Fixes
+
+* fixed bundling issues on web ([efd9933](https://github.com/kuatsu/react-native-boost/commit/efd9933604a6053d5b64cb9faec714c0e3987410))
+
+## [0.5.7](https://github.com/kuatsu/react-native-boost/compare/v0.5.6...v0.5.7) (2025-06-11)
+
+## [0.5.6](https://github.com/kuatsu/react-native-boost/compare/v0.5.5...v0.5.6) (2025-02-26)
+
+## [0.5.5](https://github.com/kuatsu/react-native-boost/compare/v0.5.4...v0.5.5) (2025-02-25)
+
+
+### Bug Fixes
+
+* don't optimize views with indirect text ancestor (custom component) ([a8d5ced](https://github.com/kuatsu/react-native-boost/commit/a8d5ced7ee4047e9094571257389a2680bd6214e))
+
+## [0.5.4](https://github.com/kuatsu/react-native-boost/compare/v0.5.3...v0.5.4) (2025-02-25)
+
+
+### Bug Fixes
+
+* fixed optimizing aliased imports ([2eee88b](https://github.com/kuatsu/react-native-boost/commit/2eee88bce014744a13f75ea08d386fba61c5be7c))
+
+## [0.5.3](https://github.com/kuatsu/react-native-boost/compare/v0.5.2...v0.5.3) (2025-02-24)
+
+
+### Bug Fixes
+
+* fixed react-native-web bundling ([56ab1b3](https://github.com/kuatsu/react-native-boost/commit/56ab1b3b0985f413691edd1ce3de9a02593f7ff8))
+
+## [0.5.2](https://github.com/kuatsu/react-native-boost/compare/v0.5.1...v0.5.2) (2025-02-24)
+
+
+### Bug Fixes
+
+* allow text string children from variables ([622a201](https://github.com/kuatsu/react-native-boost/commit/622a2011f751f9f28cdda19bf7ea676f537b1fbf))
+
+## [0.5.1](https://github.com/kuatsu/react-native-boost/compare/v0.5.0...v0.5.1) (2025-02-24)
+
+
+### Bug Fixes
+
+* fixed text style flattening ([83ef501](https://github.com/kuatsu/react-native-boost/commit/83ef501aeaa30c7dc8a59a78e74c7a700fc4b4a3))
+
+# [0.5.0](https://github.com/kuatsu/react-native-boost/compare/v0.4.1...v0.5.0) (2025-02-24)
+
+
+### Features
+
+* **example:** allow running benchmarks in production ([c21ada0](https://github.com/kuatsu/react-native-boost/commit/c21ada06e1d7ae79fb77512b272da79a15f9fa32))
+* optimize components with accessibility props ([d71d027](https://github.com/kuatsu/react-native-boost/commit/d71d027ec613b8baa96e22f155cec317e4c54e13))
+
+## [0.4.1](https://github.com/kuatsu/react-native-boost/compare/v0.4.0...v0.4.1) (2025-02-24)
+
+# [0.4.0](https://github.com/kuatsu/react-native-boost/compare/v0.3.0...v0.4.0) (2025-02-24)
+
+
+### Bug Fixes
+
+* **docs:** fixed broken link ([a3dde5d](https://github.com/kuatsu/react-native-boost/commit/a3dde5d3c400d525028e18f4cdbcf88fcc373029))
+
+
+### Features
+
+* added `<View />` optimization support ([46ca834](https://github.com/kuatsu/react-native-boost/commit/46ca834b9d62f5a3abfca7061993f82cdae48deb))
+* added `ignores` config option ([7d58a9f](https://github.com/kuatsu/react-native-boost/commit/7d58a9f8db759d3babf747504645b9a4d6ee61bd))
+* **docs:** added documentation app w/ styled homepage ([9ce312b](https://github.com/kuatsu/react-native-boost/commit/9ce312b6b6dae38a9ccd3574e72806515a86fa21))
+
+# [0.3.0](https://github.com/kuatsu/react-native-boost/compare/v0.2.0...v0.3.0) (2025-02-24)
+
+
+### Features
+
+* fix `numberOfLines` prop at build time ([58c2993](https://github.com/kuatsu/react-native-boost/commit/58c299393abaf3a9fcbb2ca933cfa02e4bf08fb3))
+
+
+### Reverts
+
+* **example:** removed console.log ([4facb6e](https://github.com/kuatsu/react-native-boost/commit/4facb6ed5c773e9b2fef28779d288b43b56612dc))
+* removed wrong rollup config ([b4b69c0](https://github.com/kuatsu/react-native-boost/commit/b4b69c01c90a5e11659569a22c5c23805f9df753))
+
+# [0.2.0](https://github.com/kuatsu/react-native-boost/compare/v0.1.0...v0.2.0) (2025-02-23)
+
+
+### Features
+
+* **example:** added benchmark ([6e56b2a](https://github.com/kuatsu/react-native-boost/commit/6e56b2aaa5c9510d8be0a4898e86382ee637b0c3))
+* improved logging & [@boost-ignore](https://github.com/boost-ignore) decorator handling ([6f11cbb](https://github.com/kuatsu/react-native-boost/commit/6f11cbb5b1480b10cd20d2544fa334da1474f44b))
+
+# [0.1.0](https://github.com/kuatsu/react-native-boost/compare/v0.0.5...v0.1.0) (2025-02-23)
+
+
+### Bug Fixes
+
+* fixed `main` entry ([2727e69](https://github.com/kuatsu/react-native-boost/commit/2727e6965e2d6f7d5fbe308bf5ff5d4c63b8c06d))
+
+
+### Features
+
+* added ignore decorator comment ([3f7d0dc](https://github.com/kuatsu/react-native-boost/commit/3f7d0dc4a67623fee41f473ca588d6901c5b3e97))
+* allow text style prop ([e916da5](https://github.com/kuatsu/react-native-boost/commit/e916da5f6bfee0d5480b660fab70c6e0a67deace))
+
+## [0.0.5](https://github.com/kuatsu/react-native-boost/compare/v0.0.4...v0.0.5) (2025-02-23)
+
+
+### Features
+
+* minify bundle ([8fd6687](https://github.com/kuatsu/react-native-boost/commit/8fd66878599af4313d428687557bac22a832fd78))
+
+## [0.0.4](https://github.com/kuatsu/react-native-boost/compare/v0.0.3...v0.0.4) (2025-02-23)
+
+
+### Bug Fixes
+
+* re-add README to npm ([4f39ab5](https://github.com/kuatsu/react-native-boost/commit/4f39ab5162ab412a330aa60f0efa63604f94ec23))
+
+## 0.0.3 (2025-02-23)
+
+
+### Bug Fixes
+
+* added prettier ([fb73927](https://github.com/kuatsu/react-native-boost/commit/fb73927f2ca613709a2eb181903f52e39903159a))
+* **ci:** fixed release workflow ([42d1ce1](https://github.com/kuatsu/react-native-boost/commit/42d1ce1a0691831178a7ef2db78d0258ea4826b3))
+* fixed husky hooks ([d0540c9](https://github.com/kuatsu/react-native-boost/commit/d0540c94007e9f13ecd70a22b572084afe58ee0d))
+* fixed prettier ([b78e6b4](https://github.com/kuatsu/react-native-boost/commit/b78e6b4c47d0321fa2fa303d5197763aadd4f272))
+* fixed tsconfig ([29abcfc](https://github.com/kuatsu/react-native-boost/commit/29abcfcb48b8194d34bdf34af2db4a85fa6a15c5))
+* package resolution fix ([bb83508](https://github.com/kuatsu/react-native-boost/commit/bb8350860f2ac952e9fd00702c55357fef013438))
+* try to fix lockfile ([16bf4e4](https://github.com/kuatsu/react-native-boost/commit/16bf4e4d9a7bd00c28897ab6ef74377ad307cc00))
+
+
+### Features
+
+* **example:** added android implementation of benchmarking module ([1c5c4fb](https://github.com/kuatsu/react-native-boost/commit/1c5c4fb2d7165375dffa52f8b6ab0a338e7cdaf1))
+* **example:** initialized example app ([19608a9](https://github.com/kuatsu/react-native-boost/commit/19608a94f4e45cf39c13901e472f46181a95115b))
+* **example:** ios implementation of benchmarking turbo module ([cd54789](https://github.com/kuatsu/react-native-boost/commit/cd547896b58046a34499b9045c407d4dcf6a5434))
+* **example:** scaffolded new turbo module for benchmarks ([187650e](https://github.com/kuatsu/react-native-boost/commit/187650e2d5dc0f4e77520568c4da15c6cd4d602f))
+* improved plugin import ([0e97f1e](https://github.com/kuatsu/react-native-boost/commit/0e97f1eea615a2516066fa6a94c9b3685e6576ae))
+* initial commit ([3d3c0ad](https://github.com/kuatsu/react-native-boost/commit/3d3c0adcdcc35e3f641312f89292ee72b52142dc))
+* optional logging ([c4ad283](https://github.com/kuatsu/react-native-boost/commit/c4ad283db3e7af3f116ba66c90897f2f94362f97))
+* try to resolve spread attribute ([2aeb5a1](https://github.com/kuatsu/react-native-boost/commit/2aeb5a1d92f4600f87f6d638ae34db804640ae22))

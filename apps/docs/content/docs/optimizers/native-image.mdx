@@ -1,0 +1,37 @@
+---
+title: Native Image
+description: How Boost moves React Native Image wrapper work to build time and when it skips an image.
+---
+
+The Native Image optimizer replaces React Native's `Image` component, which is a JavaScript-based wrapper component, with its native host component.
+
+The wrapper normally prepares sources, dimensions, styles, request headers, and accessibility props during rendering. Boost moves this work to build time when possible. Dynamic sources use a small runtime helper when they can still be handled safely.
+
+## When it runs
+
+The optimizer can usually replace an `Image` when:
+
+- It is imported from `react-native`.
+- The build targets iOS or Android.
+- It has a supported `source`, `src`, or static `srcSet`.
+- Its wrapper-level props can be safely prepared or passed through.
+- On Android 0.83–0.84, Boost can prove that it is not inside a `Text`. Boost also requires this proof when it cannot detect the React Native version.
+
+## When it skips
+
+Boost keeps the `Image` wrapper when it finds:
+
+- No image source.
+- A dynamic or malformed `srcSet`.
+- Unproved load callbacks, `onProgress`, `onPartialLoad`, a `ref`, children, or another prop that requires the wrapper.
+- A spread that might contain Image wrapper props.
+- A `srcSet` combination whose dimensions or styles cannot be resolved safely.
+- On Android 0.83–0.84, or when the version is unknown, a parent, runtime parent, or unknown ancestor that might provide a text context.
+- A Unistyles style, or a style that might come from Unistyles. Unistyles does not provide a lean Image host.
+- An unknown or unsupported target platform.
+
+Text ancestry does not select the Image host on iOS or Android 0.85 and later. Unknown ancestors can still inspect or clone an Image and inject props. Boost keeps these sites on the wrapper, even with `unknownAncestorsDoNotRenderText` enabled.
+
+## Configuration
+
+The optimizer is enabled by default. Set `native-image` to `off` to disable it.

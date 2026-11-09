@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+  - tooling/*
+
+nodeLinker: hoisted
+
+pmOnFail: download
+minimumReleaseAgeStrict: true
+
+allowBuilds:
+  core-js: true
+  esbuild: true

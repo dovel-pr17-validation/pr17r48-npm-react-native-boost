@@ -1,0 +1,128 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Lint files
+        run: pnpm lint
+
+      - name: Test formatting
+        run: pnpm format --check
+
+      - name: Verify formatted code is unchanged
+        run: git diff --exit-code HEAD
+
+      - name: Typecheck files
+        run: pnpm typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run tests
+        run: pnpm test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build plugin
+        run: pnpm package build
+
+  parity-matrix:
+    name: React Native ${{ matrix.react-native }} / Metro ${{ matrix.metro }} parity
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - react-native: '0.83'
+            metro: '0.83.8'
+          - react-native: '0.84'
+            metro: '0.83.8'
+          - react-native: '0.85'
+            metro: '0.84.5'
+          - react-native: '0.86'
+            metro: '0.84.6'
+          - react-native: '0.87'
+            metro: '0.87.0'
+          - react-native: '0.88.0-rc.0'
+            metro: '0.87.0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Select React Native and Metro versions
+        env:
+          METRO_VERSION: ${{ matrix.metro }}
+          REACT_NATIVE_VERSION: ${{ matrix.react-native }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'packages/react-native-boost/package.json';
+          const packageJson = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const metroVersion = process.env.METRO_VERSION;
+          const reactNativeVersion = process.env.REACT_NATIVE_VERSION;
+
+          packageJson.devDependencies['metro'] = metroVersion;
+          packageJson.devDependencies['metro-config'] = metroVersion;
+          packageJson.devDependencies['react-native'] = reactNativeVersion;
+          packageJson.devDependencies['@react-native/babel-preset'] = reactNativeVersion;
+          fs.writeFileSync(path, `${JSON.stringify(packageJson, null, 2)}\n`);
+          NODE
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - uses: pnpm/setup@v3
+        with:
+          node-version-file: false
+          cache: true
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            packages/react-native-boost/package.json
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck package
+        run: pnpm package typecheck
+
+      - name: Build package
+        run: pnpm package build
+
+      - name: Test Metro integration
+        run: pnpm --filter react-native-boost exec vitest run --project unit src/metro/__tests__
+
+      - name: Test runtime parity
+        run: pnpm package test --run --project parity

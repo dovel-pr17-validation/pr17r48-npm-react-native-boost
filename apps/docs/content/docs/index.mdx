@@ -1,0 +1,130 @@
+---
+title: Getting Started
+description: Install React Native Boost to boost your app's performance with one line of code.
+---
+
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs'
+
+## Introduction
+
+React Native Boost is a React Native performance compiler.
+
+It analyzes your app at build time and automatically applies safe performance optimizations across your React Native code.
+
+It eliminates unnecessary runtime work, replaces JavaScript abstractions with more efficient native equivalents, and fixes common performance pitfalls without requiring you to rewrite your application code.
+
+## Compatibility
+
+| `react-native-boost` | React Native |
+| --- | --- |
+| `0.x` | All versions |
+| `1.x` | `>=0.83` |
+| `2.x` | `>=0.83` |
+
+Boost 0.x and 1.x are not supported anymore and may break with future React Native updates. For Boost 2.x, we validate runtime behavior against all stable versions of React Native since 0.83. 
+
+Starting from React Native 0.80, Boost 0.x causes React Native to print import deprecation warnings. [See react-native-community/discussions-and-proposals #893.](https://github.com/react-native-community/discussions-and-proposals/discussions/893)
+
+## Getting Started
+
+1. Install React Native Boost:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']} groupId="package-manager" persist>
+  <Tab value="npm">
+
+  ```bash
+  npm install react-native-boost
+  ```
+
+  </Tab>
+  <Tab value="pnpm">
+
+  ```bash
+  pnpm add react-native-boost
+  ```
+
+  </Tab>
+  <Tab value="yarn">
+
+  ```bash
+  yarn add react-native-boost
+  ```
+
+  </Tab>
+  <Tab value="bun">
+
+  ```bash
+  bun add react-native-boost
+  ```
+
+  </Tab>
+</Tabs>
+
+2. Add Boost to `metro.config.js`:
+
+```js
+const { getDefaultConfig } = require('expo/metro-config');
+const { withBoostConfig } = require('react-native-boost/metro');
+
+module.exports = withBoostConfig(getDefaultConfig(__dirname));
+```
+
+Bare React Native apps should import `getDefaultConfig` from `@react-native/metro-config` instead.
+
+If you do not use Metro in your project, refer to the [Babel plugin setup instructions](./configuration/non-metro.mdx) instead.
+
+If you're using Unistyles or Nativewind in your project, refer to these additional setup instructions:
+
+<Cards>
+  <Card title="Unistyles Support" href="/docs/compatibility/unistyles" />
+  <Card title="Nativewind Support" href="/docs/compatibility/nativewind" />
+</Cards>
+
+3. Restart the development server and clear cache:
+
+<Tabs items={['npm', 'pnpm', 'yarn', 'bun']} groupId="package-manager" persist>
+  <Tab value="npm">
+
+  ```bash
+  npm start -- --clear
+  ```
+
+  </Tab>
+  <Tab value="pnpm">
+
+  ```bash
+  pnpm start -- --clear
+  ```
+
+  </Tab>
+  <Tab value="yarn">
+
+  ```bash
+  yarn start --clear
+  ```
+
+  </Tab>
+  <Tab value="bun">
+
+  ```bash
+  bun run start --clear
+  ```
+
+  </Tab>
+</Tabs>
+
+<Callout title="Runtime Dependency">
+  The Babel plugin imports optimized components via `react-native-boost/runtime`, so `react-native-boost` must be
+  available at runtime and must therefore **not** be installed as a dev dependency.
+</Callout>
+
+## Platform Support
+
+React Native Boost supports all platforms. Optimizations are performed on iOS and Android, while falling back to the default components on all other platforms.
+
+<Cards>
+  <Card title="How It Works" href="/docs/information/how-it-works" />
+  <Card title="Optimizers" href="/docs/optimizers" />
+  <Card title="Troubleshooting" href="/docs/information/troubleshooting" />
+  <Card title="Configuration" href="/docs/configuration/configure" />
+</Cards>

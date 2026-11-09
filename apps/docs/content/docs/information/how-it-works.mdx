@@ -1,0 +1,51 @@
+---
+title: How It Works
+description: Why React Native Boost makes your app faster.
+---
+
+In React Native, many of the standard components, like `Text` and `View`, aren't quite what they appear to be. They look like basic building blocks, but each one runs JavaScript code **every time it renders**, wrapping lower-level native components underneath.
+
+These wrappers are genuinely useful. They handle edge cases and power many conveniences such as style normalization. But the majority of elements do not need all that runtime work, making these wrappers pure overhead in most cases. On a busy screen with hundreds of these components, that overhead adds up and starts costing you frames.
+
+React Native Boost removes such wrappers when they're not needed. Additionally, it also makes a few smaller micro-optimizations that move small runtime work to the build time, like resolving `StyleSheet` function calls, folding `Platform.OS` branches, and more, which all stack up additionally across an app.
+
+React Native Boost can therefore be described as a performance optimization compiler for React Native.
+
+## A quick before and after
+
+```tsx
+// You write:
+<Text style={{ color: Platform.select({ ios: "red", default: "blue" }) }}>Hello</Text>
+
+// On iOS, Boost compiles it to (simplified):
+<NativeText style={{ color: "red" }} allowFontScaling={true} ellipsizeMode="tail">Hello</NativeText>
+```
+
+This is exactly what React Native would have rendered using its `Text` wrapper component. The difference is that Boost does this work at build time, while pure React Native relies on a middleman on the runtime doing this work on your user's device instead.
+
+## Only when it's safe
+
+By default, Boost rewrites a component only when it can **prove** that doing so is safe. For each optimization candidate it checks a lot of things. For example:
+
+- Is this really a `react-native` component, or some other `Text` from another library?
+- Are its props fully compatible with the underlying native component?
+- Is it in a safe spot in the tree (for example, not nested inside another `Text`)?
+
+If any check fails and Boost can't safely transform it at build time, it leaves that component or function exactly as it was. It has a strong bias toward safety and would rather miss an optimization than risk a bug.
+
+## Compatibility boundary
+
+Boost guarantees parity with React Native's public API and default internal configuration. It does not guarantee behavioral parity if your app uses private deep imports, custom internal feature flag values, internal component injection, or similar private or internal APIs.
+
+<Cards>
+  <Card
+    title="Optimizers"
+    href="/docs/optimizers"
+    description="What gets optimized, what gets skipped, and why."
+  />
+  <Card
+    title="Benchmarks"
+    href="/docs/information/benchmarks"
+    description="How much faster, and how it's measured."
+  />
+</Cards>

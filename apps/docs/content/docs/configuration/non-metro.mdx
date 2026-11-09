@@ -1,0 +1,40 @@
+---
+title: Non-Metro environments
+description: Configure Boost in apps that do not use Metro.
+---
+
+Since React Native Boost 2.x, we're using a Metro config adapter. In previous versions, a Babel config plugin was used instead.
+
+The Babel plugin is still provided as a fallback option for setups where Metro is unavailable. These are rare and it's likely that your app does not fall under this category. If you're unsure if you're using Metro, but simply don't see the `metro.config.js` file in your project, try running this command first to create it:
+
+```sh
+npx expo customize metro.config.js
+```
+
+Then refer back to the [Metro configuration guide](./configure).
+
+If Metro is indeed unavailable in your setup, you can use the Babel plugin:
+
+```js
+// babel.config.js
+module.exports = {
+  plugins: [
+    [
+      'react-native-boost/plugin',
+      {
+        target: {
+          reactNative: {
+            packageJson: require.resolve('react-native/package.json'),
+          },
+        },
+      },
+    ],
+  ],
+};
+```
+
+Boost reads this package to select version-specific behavior and matching build-time processors.
+
+The target is optional. Without it, the Babel plugin tries to find the installed React Native package automatically and logs a warning. If detection fails, Boost skips version-dependent work and uses runtime fallbacks where available.
+
+Cross-file ancestor resolution needs Metro's resolved module graph. Non-Metro builds can therefore only safely use same-file ancestor analysis, which leads to lower optimization coverage.

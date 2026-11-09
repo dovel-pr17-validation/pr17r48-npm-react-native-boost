@@ -1,0 +1,33 @@
+{
+  "title": "React Native Boost",
+  "description": "Documentation for React Native Boost",
+  "root": true,
+  "pages": [
+    "index",
+    "---Information---",
+    "information/how-it-works",
+    "information/troubleshooting",
+    "information/benchmarks",
+    "---Configuration---",
+    "configuration/configure",
+    "configuration/non-metro",
+    "configuration/boost-decorator",
+    "configuration/migrate-v2",
+    "---Optimizers---",
+    "optimizers/index",
+    "optimizers/native-text",
+    "optimizers/native-view",
+    "optimizers/native-image",
+    "optimizers/native-activity-indicator",
+    "optimizers/animated-value-initialization",
+    "optimizers/animated-wrapper-removal",
+    "optimizers/stylesheet-operations",
+    "optimizers/platform-folding",
+    "---Compatibility---",
+    "compatibility/unistyles",
+    "compatibility/nativewind",
+    "compatibility/uniwind",
+    "---Runtime Library---",
+    "runtime-library/index"
+  ]
+}

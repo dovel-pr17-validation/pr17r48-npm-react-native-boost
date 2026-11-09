@@ -1,0 +1,164 @@
+import process from 'node:process';
+import { collectFibers } from './collectors/fibers.ts';
+import { collectFps } from './collectors/fps.ts';
+import {
+  BUILD_PROFILES,
+  DEFAULT_ORDER,
+  DEFAULT_REPLICATES,
+  DEFAULT_SEED,
+  DEFAULT_SERVER_PORT,
+  DEFAULT_SWEEP,
+  DEFAULT_THERMAL,
+} from './config.ts';
+import { resolveContext } from './context.ts';
+import { detectDevice } from './device.ts';
+import { writeArchiveIndex, writeReport, writeRunReport } from './report/index.ts';
+import { keyOf, listRuns, loadRun, saveContext, saveFibers, saveFps } from './store.ts';
+import type { Platform, SweepConfig, ThermalPolicy } from './schema.ts';
+
+type Flags = Record<string, string | true>;
+
+function parseArgs(argv: string[]): Flags {
+  const flags: Flags = {};
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (!arg.startsWith('--')) continue;
+    const key = arg.slice(2);
+    const next = argv[i + 1];
+    if (next === undefined || next.startsWith('--')) {
+      flags[key] = true;
+    } else {
+      flags[key] = next;
+      i++;
+    }
+  }
+  return flags;
+}
+
+/** Validate a flag's value against an allowed set, failing loudly instead of casting a typo through. */
+function oneOf<T extends string>(value: string, allowed: readonly T[], flag: string): T;
+function oneOf<T extends string>(value: string | true | undefined, allowed: readonly T[], flag: string): T | undefined;
+function oneOf<T extends string>(value: string | true | undefined, allowed: readonly T[], flag: string): T | undefined {
+  if (value === undefined) return undefined;
+  if (value === true || !allowed.includes(value as T)) {
+    throw new Error(`--${flag} must be one of: ${allowed.join(', ')}`);
+  }
+  return value as T;
+}
+
+/** Read a flag that needs a value; throws if it was passed bare (`--flag` with nothing after it). */
+function valueOf(value: string | true | undefined, flag: string): string | undefined {
+  if (value === true) throw new Error(`--${flag} requires a value`);
+  return value;
+}
+
+/** Parse a comma-separated flag into a list, validating every item against `allowed`; `undefined` if unset. */
+function listOf<T extends string>(
+  value: string | true | undefined,
+  allowed: readonly T[],
+  flag: string
+): T[] | undefined {
+  const raw = valueOf(value, flag);
+  return raw === undefined ? undefined : raw.split(',').map((item) => oneOf(item.trim(), allowed, flag));
+}
+
+const log = (message: string): void => {
+  console.log(message);
+};
+
+async function main(): Promise<void> {
+  const flags = parseArgs(process.argv.slice(2));
+
+  const loadsArg = valueOf(flags.loads, 'loads');
+  const loads = loadsArg ? loadsArg.split(',').map(Number) : undefined;
+  if (loads && (loads.length === 0 || loads.some((n) => !Number.isFinite(n) || n <= 0))) {
+    throw new Error('--loads must be comma-separated positive numbers (rows rendered per side)');
+  }
+  const sweep: SweepConfig = { ...DEFAULT_SWEEP, ...(loads ? { loads } : {}) };
+  const portArg = valueOf(flags.port, 'port');
+  const port = portArg ? Number(portArg) : DEFAULT_SERVER_PORT;
+  if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
+    throw new Error('--port must be an integer between 1 and 65535');
+  }
+  const only = oneOf(flags.only, ['fibers', 'fps'] as const, 'only');
+  const thermalFloor = oneOf(
+    flags['thermal-floor'],
+    ['nominal', 'fair', 'serious', 'critical'] as const,
+    'thermal-floor'
+  );
+  const maxWaitArg = valueOf(flags['thermal-max-wait'], 'thermal-max-wait');
+  const thermal: ThermalPolicy = {
+    ...DEFAULT_THERMAL,
+    ...(thermalFloor ? { floor: thermalFloor } : {}),
+    ...(maxWaitArg ? { maxWaitMs: Number(maxWaitArg) } : {}),
+  };
+  if (!Number.isFinite(thermal.maxWaitMs) || thermal.maxWaitMs < 0) {
+    throw new Error('--thermal-max-wait must be a non-negative number of milliseconds');
+  }
+  const replicatesArg = valueOf(flags.replicates, 'replicates');
+  const replicates = replicatesArg ? Number(replicatesArg) : DEFAULT_REPLICATES;
+  if (!Number.isInteger(replicates) || replicates < 1) {
+    throw new Error('--replicates must be a positive integer');
+  }
+  const order = oneOf(flags.order, ['ascending', 'palindrome', 'shuffle'] as const, 'order') ?? DEFAULT_ORDER;
+  const seedArg = valueOf(flags.seed, 'seed');
+  const seed = seedArg ? Number(seedArg) : DEFAULT_SEED;
+  if (!Number.isFinite(seed)) {
+    throw new TypeError('--seed must be a number');
+  }
+  const profileIds = BUILD_PROFILES.map((p) => p.id);
+  const selectedProfiles = listOf(flags.profiles, profileIds, 'profiles') ?? profileIds;
+  const profiles = BUILD_PROFILES.filter((p) => selectedProfiles.includes(p.id));
+  const selectedPlatforms = listOf(flags.platform, ['ios', 'android'] as const, 'platform');
+  const explicitPlatform = selectedPlatforms !== undefined;
+  const platforms: Platform[] = selectedPlatforms ?? ['ios', 'android'];
+
+  const context = resolveContext(sweep, new Date().toISOString());
+  const key = keyOf(context);
+  log(
+    `React Native ${context.rnVersion} · React ${context.reactVersion} · Boost ${context.boostVersion} · ${context.gitSha}`
+  );
+
+  // Regenerate every archived run's graphs + the index once, no new capture.
+  if (flags['report-only']) {
+    const runs = listRuns();
+    for (const run of runs) writeRunReport(run);
+    writeArchiveIndex(runs);
+    log(`regenerated reports for ${runs.length} archived run(s)`);
+    return;
+  }
+
+  saveContext(context);
+
+  if (only !== 'fps') {
+    log('• fibers — structural saving (headless)…');
+    const fibers = collectFibers(sweep);
+    saveFibers(key, fibers);
+    log(`  ${fibers.perRow.fibersOff} → ${fibers.perRow.fibersOn} nodes/row (saves ${fibers.perRow.savedPerRow})`);
+  }
+
+  if (only !== 'fibers') {
+    for (const platform of platforms) {
+      try {
+        detectDevice(platform);
+      } catch (error) {
+        if (explicitPlatform) throw error;
+        log(`• ${platform} — skipped: ${(error as Error).message}`);
+        continue;
+      }
+      log(`• ${platform} — FPS sweep (profiles: ${profiles.map((p) => p.id).join(', ')})`);
+      saveFps(key, await collectFps({ platform, sweep, port, profiles, thermal, replicates, order, seed, log }));
+    }
+  }
+
+  const run = loadRun(key);
+  if (run) {
+    writeReport(run, listRuns());
+    log(`✓ report → benchmarks/results/rn-${key.rnVersion}/boost-${key.boostSha}/report.md`);
+  }
+}
+
+main().catch((error: Error) => {
+  console.error(`benchmark failed: ${error.message}`);
+  process.exitCode = 1;
+});

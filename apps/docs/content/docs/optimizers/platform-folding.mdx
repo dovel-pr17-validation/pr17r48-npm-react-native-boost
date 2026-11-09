@@ -1,0 +1,37 @@
+---
+title: Platform Folding
+description: Resolves React Native Platform values during the build.
+---
+
+The Platform Folding optimizer resolves React Native `Platform.select` calls and `Platform.OS` uses before the other Boost optimizers run. While Metro and Expo already perform similar release transforms in a later stage of the pipeline, that is too late for Boost to optimize any JSX and styles that make use of the `Platform` module. This early pass can therefore remove these runtime helpers earlier and increase optimization coverage of other Boost optimizers.
+
+```jsx
+import { Platform } from 'react-native';
+
+const color = Platform.select({ ios: 'blue', android: 'green', default: 'red' });
+const cacheKey = `${Platform.OS}-cache`;
+const screen = Platform.OS === 'ios' ? <IOSScreen /> : <AndroidScreen />;
+if (Platform.OS === 'android') require('./install-android');
+```
+
+For an iOS build, this becomes the equivalent of:
+
+```jsx
+const color = 'blue';
+const cacheKey = 'ios-cache';
+const screen = <IOSScreen />;
+```
+
+`Platform.select` follows React Native's fallback order: the target platform, `native`, then `default`. The optimizer requires a plain object literal. It skips computed keys, spreads, getters, and additional arguments. Branch folding requires a strict (`===` or `!==`) comparison between `Platform.OS` and a string literal.
+
+## Configuration
+
+The optimizer is enabled by default. You can disable it in `metro.config.js`:
+
+```js
+module.exports = withBoostConfig(config, {
+  optimizations: {
+    'platform-folding': 'off',
+  },
+});
+```

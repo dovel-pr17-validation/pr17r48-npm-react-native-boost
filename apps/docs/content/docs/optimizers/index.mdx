@@ -1,0 +1,48 @@
+---
+title: Overview
+description: What React Native Boost can optimize and the cases it safely skips.
+---
+
+React Native Boost includes different optimizers that optimize different parts of your app.
+
+<Cards>
+  <Card title="Native Text" href="/docs/optimizers/native-text" description="Removes the React Native Text wrapper." />
+  <Card title="Native View" href="/docs/optimizers/native-view" description="Removes the React Native View wrapper." />
+  <Card title="Native Image" href="/docs/optimizers/native-image" description="Moves Image wrapper work to build time." />
+  <Card title="Native Activity Indicator" href="/docs/optimizers/native-activity-indicator" description="Builds the native spinner tree ahead of time." />
+  <Card title="Animated Value Initialization" href="/docs/optimizers/animated-value-initialization" description="Creates persistent Animated values only once." />
+  <Card title="Animated Wrapper Removal" href="/docs/optimizers/animated-wrapper-removal" description="Removes Animated wrappers that contain no animation." />
+  <Card title="StyleSheet Operations" href="/docs/optimizers/stylesheet-operations" description="Evaluates static StyleSheet operations during the build." />
+  <Card title="Platform Folding" href="/docs/optimizers/platform-folding" description="Resolves static React Native platform branches." />
+</Cards>
+
+## Shared component safety rules
+
+When optimizing a component, all optimizers first confirm that the component comes from `react-native`. A component from another package, or a local component with the same name, is not changed.
+
+Boost also skips a component when:
+
+- Its file matches an [`ignores`](/docs/configuration/configure#plugin-options-ignores) pattern.
+- Its line has [`@boost-ignore`](/docs/configuration/boost-decorator#boost-ignore).
+- Required information is only available at runtime.
+
+Set `logLevel: 'debug'` to see why a component was skipped.
+
+## Controlling optimizers
+
+Most optimizers are enabled by default. Exceptions are:
+
+- The [Animated Wrapper Removal optimizer](./animated-wrapper-removal) is enabled by default only for React Native 0.83 through 0.86.
+
+You can turn each optimizer on or off in `metro.config.js`:
+
+```js
+module.exports = withBoostConfig(config, {
+  optimizations: {
+    'native-image': 'off',
+    'animated-wrapper-removal': 'on',
+  },
+});
+```
+
+See [Configure Boost](/docs/configuration/configure#optimization-options) for all options.

@@ -1,0 +1,73 @@
+---
+title: Configure Boost
+description: Control logging, ignores, integrations, and optimization behavior.
+---
+
+## Example Configuration
+
+Pass options to `withBoostConfig` in your Metro config.
+
+```js
+// metro.config.js
+const { getDefaultConfig } = require('expo/metro-config');
+const { withBoostConfig } = require('react-native-boost/metro');
+
+module.exports = withBoostConfig(getDefaultConfig(__dirname), {
+  logLevel: 'debug',
+  ignores: ['node_modules/**'],
+  integrations: {
+    unistyles: 'on',
+  },
+  optimizations: {
+    'native-activity-indicator': 'off',
+  },
+});
+```
+
+If you're using a custom `resolver.resolveRequest` that redirects react-native to a different installation, you may need to set the React Native package path explicitly:
+
+```js
+withBoostConfig(config, {
+  target: { reactNative: { packageJson: require.resolve('react-native/package.json') } },
+});
+```
+
+<Callout type="info" title="Babel config">
+  Boost 2 does not need Babel configuration when you use Metro. For other bundlers, see the [non-Metro setup guide](./non-metro).
+</Callout>
+
+## Plugin Options
+
+<AutoOptionSections path="../../packages/react-native-boost/src/plugin/types/index.ts" name="PluginOptions" idPrefix="plugin-options" />
+
+## Optimization Options
+
+Set an optimization to `on` or `off`. Omitted entries use their defaults.
+
+<AutoOptionSections
+  path="../../packages/react-native-boost/src/plugin/types/index.ts"
+  name="PluginOptimizationOptions"
+  idPrefix="plugin-optimization-options"
+/>
+
+## Assumptions
+
+Assumptions let Boost optimize code that static analysis cannot prove safe.
+
+<Callout type="warn" title="Verify assumptions">
+  A false assumption can change runtime behavior. Make sure you know what you're doing.
+</Callout>
+
+<AutoOptionSections
+  path="../../packages/react-native-boost/src/plugin/types/index.ts"
+  name="PluginAssumptions"
+  idPrefix="plugin-assumptions"
+/>
+
+## Integration Options
+
+<AutoOptionSections
+  path="../../packages/react-native-boost/src/plugin/types/index.ts"
+  name="PluginIntegrationOptions"
+  idPrefix="plugin-integration-options"
+/>
